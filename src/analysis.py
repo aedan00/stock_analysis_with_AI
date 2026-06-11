@@ -99,6 +99,32 @@ def analyze_stock(
     else:
         macd_signal = "Bearish"
 
+
+    # Volume
+    analysis["AVG_VOLUME20"] = (
+        analysis["Volume"]
+        .rolling(20)
+        .mean()
+    )
+
+    current_volume = analysis["Volume"].iloc[-1]
+
+    average_volume = analysis["AVG_VOLUME20"].iloc[-1]
+
+    relative_volume = (
+        current_volume
+        / average_volume
+    )
+
+    if relative_volume > 1.5:
+        volume_signal = "Very High"
+    elif relative_volume > 1.1:
+        volume_signal = "Above Average"
+    elif relative_volume < 0.8:
+        volume_signal = "Below Average"
+    else:
+        volume_signal = "Average"
+
     metrics = StockMetrics(
     latest_price=end_price,
     total_return=total_return,
@@ -107,6 +133,10 @@ def analyze_stock(
     rsi=currentRsi,
     rsi_signal=rsi_signal,
     macd_signal=macd_signal,
+    current_volume=current_volume,
+    average_volume=average_volume,
+    relative_volume=relative_volume,
+    volume_signal=volume_signal,
     )
 
     #validation

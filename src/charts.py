@@ -1,6 +1,7 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.ticker import FuncFormatter
 
 REPORT_DIR = Path("reports")
 REPORT_DIR.mkdir(exist_ok=True)
@@ -36,10 +37,15 @@ def plot_stock(
             f"Missing columns: {missing}"
         )
 
+    # check available columns
+    print(
+        data.columns
+    )
+
     fig, axes = plt.subplots(
-        nrows=3,
+        nrows=4,
         ncols=1,
-        figsize=(14, 10),
+        figsize=(14, 14),
         sharex=True,
 )
 
@@ -131,6 +137,39 @@ def plot_stock(
     axes[2].grid(True)
     axes[2].legend()
 
+
+    # Volume
+    colors = [
+        "green" if close >= open else "red"
+        for close, open in zip(
+            data["Close"],
+            data["Open"]
+        )
+    ]
+    axes[3].bar(
+        data.index,
+        data["Volume"],
+        label="Volume",
+        color=colors,
+    )
+
+    axes[3].plot(
+        data.index,
+        data["AVG_VOLUME20"],
+        label="20-Day Average Volume",
+        color="orange",
+        linewidth=2,
+    )
+
+    axes[3].set_title("Trading Volume")
+    axes[3].set_ylabel("Shares")
+    axes[3].yaxis.set_major_formatter(
+        FuncFormatter(
+            lambda x, _: f"{x/1_000_000:.1f}M"
+        )
+    )
+    axes[3].grid(True)
+    axes[3].legend()
 
     filename = REPORT_DIR / f"{ticker}_chart.png"
 
