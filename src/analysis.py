@@ -1,6 +1,6 @@
 import pandas as pd
 from typing import Any
-from indicators import (calculate_rsi, calculate_macd,)
+from indicators import (calculate_rsi, calculate_macd, calculate_atr)
 from models import StockMetrics
 from config import (
     TRADING_DAYS_PER_YEAR,
@@ -125,19 +125,44 @@ def analyze_stock(
     else:
         volume_signal = "Average"
 
+
+    analysis["ATR"] = calculate_atr(analysis)
+    current_atr = analysis["ATR"].iloc[-1]
+    atr_percent = (
+        current_atr
+        / end_price
+    ) * 100
+    if atr_percent < 1:
+        volatility = "Low"
+
+    elif atr_percent < 3:
+        volatility = "Moderate"
+
+    elif atr_percent < 5:
+        volatility = "High"
+
+    else:
+        volatility = "Very High"
+
+
     metrics = StockMetrics(
-    latest_price=end_price,
-    total_return=total_return,
-    annualized_volatility=annualized_volatility,
-    trend=trend,
-    rsi=currentRsi,
-    rsi_signal=rsi_signal,
-    macd_signal=macd_signal,
-    current_volume=current_volume,
-    average_volume=average_volume,
-    relative_volume=relative_volume,
-    volume_signal=volume_signal,
+        latest_price=end_price,
+        total_return=total_return,
+        annualized_volatility=annualized_volatility,
+        trend=trend,
+        rsi=currentRsi,
+        rsi_signal=rsi_signal,
+        macd_signal=macd_signal,
+        current_volume=current_volume,
+        average_volume=average_volume,
+        relative_volume=relative_volume,
+        volume_signal=volume_signal,
+        atr=current_atr,
+        atr_percent=atr_percent,
+        volatility=volatility,
     )
+
+
 
     #validation
     print(

@@ -13,6 +13,9 @@ class StockMetrics:
     average_volume: float
     relative_volume: float
     volume_signal: str
+    atr: float
+    atr_percent: float
+    volatility: str
 
 @dataclass
 class Report:

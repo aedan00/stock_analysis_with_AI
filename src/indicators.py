@@ -3,7 +3,8 @@ from config import (
     RSI_PERIOD,
     MACD_FAST_PERIOD,
     MACD_SLOW_PERIOD,
-    MACD_SIGNAL_PERIOD
+    MACD_SIGNAL_PERIOD,
+    ATR_PERIOD
 )
 
 def calculate_rsi(
@@ -67,7 +68,8 @@ def calculate_macd(
 
     ema_slow = (
         data["Close"]
-        .ewm(slow_period)
+        .ewm(slow_period,
+             adjust=False)
         .mean()
     )
 
@@ -75,7 +77,8 @@ def calculate_macd(
 
     macd_data["MACD_SIGNAL"] = (
         macd_data["MACD"]
-        .ewm(signal_period)
+        .ewm(signal_period,
+             adjust=False)
         .mean()
     )
 
@@ -84,3 +87,30 @@ def calculate_macd(
     )
 
     return macd_data
+
+def calculate_atr(
+    data: pd.DataFrame,
+    period: int = ATR_PERIOD,
+) -> pd.Series:
+    high = data["High"]
+    low = data["Low"]
+    close = data["Close"]
+
+    previous_close = close.shift(1)
+
+    true_range = pd.concat(
+        [
+            high - low,
+            (high - previous_close).abs(),
+            (low - previous_close).abs(),
+        ],
+        axis=1,
+    ).max(axis=1)
+
+    atr = (
+        true_range
+        .rolling(period)
+        .mean()
+    )
+
+    return atr

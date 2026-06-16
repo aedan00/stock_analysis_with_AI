@@ -65,6 +65,21 @@ def display_report(
     )
 
     print(
+        f"ATR: "
+        f"{report.metrics.atr}"
+    )
+
+    print(
+        f"ATR Percent: "
+        f"{report.metrics.atr_percent}"
+    )
+
+    print(
+        f"ATR Volatility: "
+        f"{report.metrics.volatility}"
+    )
+
+    print(
         f"\nChart saved to:\n"
         f"{report.chart}"
     )
