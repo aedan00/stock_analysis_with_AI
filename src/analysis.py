@@ -1,6 +1,6 @@
 import pandas as pd
 from typing import Any
-from indicators import (calculate_rsi, calculate_macd, calculate_atr)
+from indicators import (calculate_rsi, calculate_macd, calculate_atr, calculate_bollinger_bands, calculate_adx)
 from models import StockMetrics
 from config import (
     TRADING_DAYS_PER_YEAR,
@@ -73,7 +73,6 @@ def analyze_stock(
         rsi_signal = "Neutral"
 
 
-
     # MACD
     macd_data = calculate_macd(analysis)
 
@@ -108,9 +107,7 @@ def analyze_stock(
     )
 
     current_volume = analysis["Volume"].iloc[-1]
-
     average_volume = analysis["AVG_VOLUME20"].iloc[-1]
-
     relative_volume = (
         current_volume
         / average_volume
@@ -126,6 +123,7 @@ def analyze_stock(
         volume_signal = "Average"
 
 
+    # volatile 
     analysis["ATR"] = calculate_atr(analysis)
     current_atr = analysis["ATR"].iloc[-1]
     atr_percent = (
@@ -134,15 +132,67 @@ def analyze_stock(
     ) * 100
     if atr_percent < 1:
         volatility = "Low"
-
     elif atr_percent < 3:
         volatility = "Moderate"
-
     elif atr_percent < 5:
         volatility = "High"
-
     else:
         volatility = "Very High"
+
+    # Bollinger Bands
+    bb_data = calculate_bollinger_bands(analysis)
+    analysis["BB_UPPER"] = bb_data["BB_UPPER"]
+    analysis["BB_MIDDLE"] = bb_data["BB_MIDDLE"]
+    analysis["BB_LOWER"] = bb_data["BB_LOWER"]
+    analysis["BB_BANDWIDTH"] = bb_data["BB_BANDWIDTH"]
+
+    current_price = analysis["Close"].iloc[-1]
+    upper = analysis["BB_UPPER"].iloc[-1]
+    middle = analysis["BB_MIDDLE"].iloc[-1]
+    lower = analysis["BB_LOWER"].iloc[-1]
+    if current_price > upper:
+        bb_signal = "Above Upper Band"
+    elif current_price < lower:
+        bb_signal = "Below Lower Band"
+    elif current_price > middle:
+        bb_signal = "Upper Half of Band"
+    else:
+        bb_signal = "Lower Half of Band"
+    bb_bandwidth = (
+        (upper - lower)
+        / middle
+    ) * 100
+
+
+
+
+
+    # ADX
+    adx_data = calculate_adx(analysis)
+    analysis["ADX"] = adx_data["ADX"]
+    analysis["PLUS_DI"] = adx_data["PLUS_DI"]
+    analysis["MINUS_DI"] = adx_data["MINUS_DI"]
+
+    current_adx = analysis["ADX"].iloc[-1]
+    plus_di = analysis["PLUS_DI"].iloc[-1]
+    minus_di = analysis["MINUS_DI"].iloc[-1]
+
+
+    if current_adx < 20:
+        adx_signal = "Weak Trend"
+    elif current_adx < 25:
+        adx_signal = "Developing Trend"
+    elif current_adx < 50:
+        adx_signal = "Strong Trend"
+    elif current_adx < 75:
+        adx_signal = "Very Strong Trend"
+    else:
+        adx_signal = "Extreme Trend"
+    if plus_di > minus_di:
+        di_signal = "Bullish"
+    else:
+        di_signal = "Bearish"
+
 
 
     metrics = StockMetrics(
@@ -160,6 +210,16 @@ def analyze_stock(
         atr=current_atr,
         atr_percent=atr_percent,
         volatility=volatility,
+        bb_upper=upper,
+        bb_middle=middle,
+        bb_lower=lower,
+        bb_signal=bb_signal,
+        bb_bandwidth=bb_bandwidth,
+        current_adx=current_adx,
+        plus_di=plus_di,
+        minus_di=minus_di,
+        adx_signal=adx_signal,
+        di_signal=di_signal,
     )
 
 
@@ -180,3 +240,7 @@ def analyze_stock(
     )
 
     return analysis, metrics
+
+
+
+
