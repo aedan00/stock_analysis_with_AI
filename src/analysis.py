@@ -1,6 +1,7 @@
 import pandas as pd
 from typing import Any
-from indicators import (calculate_rsi, calculate_macd, calculate_atr, calculate_bollinger_bands, calculate_adx)
+from indicators import (calculate_rsi, calculate_macd, calculate_atr, 
+                        calculate_bollinger_bands, calculate_adx, calculate_obv)
 from models import StockMetrics
 from config import (
     TRADING_DAYS_PER_YEAR,
@@ -194,6 +195,16 @@ def analyze_stock(
         di_signal = "Bearish"
 
 
+    analysis["OBV"] = calculate_obv(analysis)
+    current_obv = analysis["OBV"].iloc[-1]
+    previous_obv = analysis["OBV"].iloc[-2]
+    if current_obv > previous_obv:
+        obv_signal = "Accumulation"
+    elif current_obv < previous_obv:
+        obv_signal = "Distribution"
+    else:
+        obv_signal = "Neutral"
+
 
     metrics = StockMetrics(
         latest_price=end_price,
@@ -220,6 +231,8 @@ def analyze_stock(
         minus_di=minus_di,
         adx_signal=adx_signal,
         di_signal=di_signal,
+        obv=current_obv,
+        obv_signal=obv_signal,
     )
 
 

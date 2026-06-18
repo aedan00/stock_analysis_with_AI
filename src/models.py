@@ -33,11 +33,16 @@ class StockMetrics:
     bb_signal: str
     bb_bandwidth: float
 
+    #adx
     current_adx: float
     plus_di: float
     minus_di: float
     adx_signal: str
     di_signal: str
+
+    #obv
+    obv: float
+    obv_signal: str
 
 @dataclass
 class Report:

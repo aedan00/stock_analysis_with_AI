@@ -24,19 +24,13 @@ def display_report(
 
     print(
         f"Annualized Volatility: "
-        f"{report.metrics.annualized_volatility:.2%}"
-    )
-    print(
-        "\n"
+        f"{report.metrics.annualized_volatility:.2%}\n"
     )
 
 
     print(
         f"Trend: "
-        f"{report.metrics.trend}"
-    )
-    print(
-        "\n"
+        f"{report.metrics.trend}\n"
     )
 
     print(
@@ -46,12 +40,8 @@ def display_report(
 
     print(
         f"MACD Trend: "
-        f"{report.metrics.macd_signal}"
+        f"{report.metrics.macd_signal}\n"
     )
-    print(
-        "\n"
-    )
-
 
     print(
         f"Current Volume: "
@@ -70,12 +60,10 @@ def display_report(
 
     print(
         f"Volume Signal: "
-        f"{report.metrics.volume_signal}"
-    )
-    print(
-        "\n"
+        f"{report.metrics.volume_signal}\n"
     )
 
+    #ATR
     print(
         f"ATR (Average True Range): "
         f"{report.metrics.atr:.2f}"
@@ -88,12 +76,10 @@ def display_report(
 
     print(
         f"ATR Volatility: "
-        f"{report.metrics.volatility}"
-    )
-    print(
-        "\n"
+        f"{report.metrics.volatility}\n"
     )
 
+    #BB
     print(
         f"Bollinger Bands Upper Bound: "
         f"{report.metrics.bb_upper:.2f}"
@@ -108,10 +94,7 @@ def display_report(
     )
     print(
         f"Bollinger Bands Width: "
-        f"{report.metrics.bb_bandwidth:.2f}"
-    )
-    print(
-        "\n"
+        f"{report.metrics.bb_bandwidth:.2f}\n"
     )
 
     #adx
@@ -133,7 +116,17 @@ def display_report(
     )
     print(
         f"DI Signal: "
-        f"{report.metrics.di_signal}"
+        f"{report.metrics.di_signal}\n"
+    )
+
+    #obv
+    print(
+        f"OBV (On-Balance Volume): "
+        f"{report.metrics.obv:.2f}"
+    )
+    print(
+        f"OBV Signal: "
+        f"{report.metrics.obv_signal}\n"
     )
 
     print(

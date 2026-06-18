@@ -295,3 +295,39 @@ def calculate_adx(
     adx_data["MINUS_DI"] = minus_di
 
     return adx_data
+
+
+#OBV
+def calculate_obv(
+    data: pd.DataFrame,
+) -> pd.Series:
+    """
+    Calculate On-Balance Volume (OBV).
+
+    Args:
+        data: DataFrame containing Close and Volume columns.
+
+    Returns:
+        A pandas Series containing OBV values.
+    """
+
+    obv = [0]
+
+    for i in range(1, len(data)):
+        previous_close = data["Close"].iloc[i - 1]
+        current_close = data["Close"].iloc[i]
+        current_volume = data["Volume"].iloc[i]
+
+        if current_close > previous_close:
+            obv.append(obv[-1] + current_volume)
+
+        elif current_close < previous_close:
+            obv.append(obv[-1] - current_volume)
+
+        else:
+            obv.append(obv[-1])
+
+    return pd.Series(
+        obv,
+        index=data.index,
+    )
