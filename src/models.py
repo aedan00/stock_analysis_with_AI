@@ -57,6 +57,16 @@ class StockMetrics:
     #candlesticks
     candlestick_patterns: list[str]
 
+    #pivot
+    pivot: float
+    pivot_r1: float
+    pivot_r2: float
+    pivot_r3: float
+    pivot_s1: float
+    pivot_s2: float
+    pivot_s3: float
+    pivot_signal: str
+
 
 @dataclass
 class Report:

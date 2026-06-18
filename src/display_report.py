@@ -157,11 +157,45 @@ def display_report(
     if report.metrics.candlestick_patterns:
 
         for pattern in report.metrics.candlestick_patterns:
-            print(f"- {pattern}")
+            print(f"- {pattern}\n")
 
     else:
-        print("- None detected")
+        print("- None detected\n")
     
+
+    # pivot
+    print(
+        f"Pivot: "
+        f"{report.metrics.pivot:.2f}"
+    )
+    print(
+        f"Pivot R1: "
+        f"{report.metrics.pivot_r1:.2f}"
+    )
+    print(
+        f"Pivot R2: "
+        f"{report.metrics.pivot_r2:.2f}"
+    )
+    print(
+        f"Pivot R3: "
+        f"{report.metrics.pivot_r3:.2f}"
+    )
+    print(
+        f"Pivot S1: "
+        f"{report.metrics.pivot_s1:.2f}"
+    )
+    print(
+        f"Pivot S2: "
+        f"{report.metrics.pivot_s2:.2f}"
+    )
+    print(
+        f"Pivot S3: "
+        f"{report.metrics.pivot_s3:.2f}"
+    )
+    print(
+        f"Pivot Signal: "
+        f"{report.metrics.pivot_signal}\n"
+    )
 
 
     print(

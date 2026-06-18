@@ -3,7 +3,7 @@ from typing import Any
 from indicators import (calculate_rsi, calculate_macd, calculate_atr, 
                         calculate_bollinger_bands, calculate_adx, 
                         calculate_obv, calculate_support_resistance, 
-                        calculate_stochastic,)
+                        calculate_stochastic, calculate_pivot_points,)
 from candlesticks import detect_candlestick_patterns
 from models import StockMetrics
 from config import (
@@ -254,6 +254,44 @@ def analyze_stock(
     )
 
 
+    #pivot
+    pivot_data = calculate_pivot_points(
+        analysis
+    )
+
+    analysis[
+        [
+            "PIVOT",
+            "R1",
+            "R2",
+            "R3",
+            "S1",
+            "S2",
+            "S3",
+        ]
+    ] = pivot_data
+
+
+    current_price = analysis["Close"].iloc[-1]
+
+    pivot = analysis["PIVOT"].iloc[-1]
+    r1 = analysis["R1"].iloc[-1]
+    s1 = analysis["S1"].iloc[-1]
+
+
+    if current_price > r1:
+        pivot_signal = "Above Resistance"
+
+    elif current_price < s1:
+        pivot_signal = "Below Support"
+
+    elif current_price > pivot:
+        pivot_signal = "Bullish Above Pivot"
+
+    else:
+        pivot_signal = "Bearish Below Pivot"
+
+
     metrics = StockMetrics(
         latest_price=end_price,
         total_return=total_return,
@@ -288,6 +326,15 @@ def analyze_stock(
         stochastic_d=current_d,
         stochastic_signal=stochastic_signal,
         candlestick_patterns=candlestick_patterns,
+        pivot=pivot,
+        pivot_r1=r1,
+        pivot_r2=analysis["R2"].iloc[-1],
+        pivot_r3=analysis["R3"].iloc[-1],
+        pivot_s1=s1,
+        pivot_s2=analysis["S2"].iloc[-1],
+        pivot_s3=analysis["S3"].iloc[-1],
+        pivot_signal=pivot_signal,
+
     )
 
 

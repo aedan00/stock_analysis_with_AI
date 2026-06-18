@@ -419,3 +419,70 @@ def calculate_stochastic(
     stochastic["STOCHASTIC_D"] = percent_d
 
     return stochastic
+
+
+
+
+def calculate_pivot_points(
+    data: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Calculate standard pivot points.
+
+    Uses previous trading day's High, Low, Close.
+
+    Returns:
+        DataFrame with:
+        PIVOT
+        R1, R2, R3
+        S1, S2, S3
+    """
+
+    previous_high = data["High"].shift(1)
+    previous_low = data["Low"].shift(1)
+    previous_close = data["Close"].shift(1)
+
+    pivot = (
+        previous_high
+        + previous_low
+        + previous_close
+    ) / 3
+
+
+    pivots = pd.DataFrame(
+        index=data.index
+    )
+
+    pivots["PIVOT"] = pivot
+
+    pivots["R1"] = (
+        2 * pivot
+        - previous_low
+    )
+
+    pivots["S1"] = (
+        2 * pivot
+        - previous_high
+    )
+
+    pivots["R2"] = (
+        pivot
+        + (previous_high - previous_low)
+    )
+
+    pivots["S2"] = (
+        pivot
+        - (previous_high - previous_low)
+    )
+
+    pivots["R3"] = (
+        previous_high
+        + 2 * (pivot - previous_low)
+    )
+
+    pivots["S3"] = (
+        previous_low
+        - 2 * (previous_high - pivot)
+    )
+
+    return pivots
