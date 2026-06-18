@@ -27,14 +27,15 @@ def display_report(
         f"{report.metrics.annualized_volatility:.2%}\n"
     )
 
-
+    #Trend
     print(
         f"Trend: "
         f"{report.metrics.trend}\n"
     )
 
+    # RSI
     print(
-        f"RSI: {report.metrics.rsi:.2f} "
+        f"RSI (Relative Strength Index): {report.metrics.rsi:.2f} "
         f"({report.metrics.rsi_signal})"
     )
 
@@ -128,6 +129,40 @@ def display_report(
         f"OBV Signal: "
         f"{report.metrics.obv_signal}\n"
     )
+
+    #Support & Resistance
+    print(
+        f"Support & Resistance Signal: "
+        f"{report.metrics.sr_signal}\n"
+    )
+
+    #Stochastic
+    print(
+        f"Stochastic K: "
+        f"{report.metrics.stochastic_k:.2f}"
+    )
+    print(
+        f"Stochastic D: "
+        f"{report.metrics.stochastic_d:.2f}"
+    )
+    print(
+        f"Stochastic Signal: "
+        f"{report.metrics.stochastic_signal}\n"
+    )
+
+    # candlestick
+    print(
+        "Candlestick Patterns:"
+    )
+    if report.metrics.candlestick_patterns:
+
+        for pattern in report.metrics.candlestick_patterns:
+            print(f"- {pattern}")
+
+    else:
+        print("- None detected")
+    
+
 
     print(
         f"\nChart saved to:\n"

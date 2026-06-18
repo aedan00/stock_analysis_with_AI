@@ -1,7 +1,10 @@
 import pandas as pd
 from typing import Any
 from indicators import (calculate_rsi, calculate_macd, calculate_atr, 
-                        calculate_bollinger_bands, calculate_adx, calculate_obv)
+                        calculate_bollinger_bands, calculate_adx, 
+                        calculate_obv, calculate_support_resistance, 
+                        calculate_stochastic,)
+from candlesticks import detect_candlestick_patterns
 from models import StockMetrics
 from config import (
     TRADING_DAYS_PER_YEAR,
@@ -195,6 +198,7 @@ def analyze_stock(
         di_signal = "Bearish"
 
 
+    # OBV
     analysis["OBV"] = calculate_obv(analysis)
     current_obv = analysis["OBV"].iloc[-1]
     previous_obv = analysis["OBV"].iloc[-2]
@@ -204,6 +208,50 @@ def analyze_stock(
         obv_signal = "Distribution"
     else:
         obv_signal = "Neutral"
+
+
+    #S&R
+    sr_signal = "Between Levels"
+
+    support, resistance = calculate_support_resistance(analysis)
+
+    current_price = analysis["Close"].iloc[-1]
+
+    if resistance is not None:
+        if current_price >= resistance * 0.98:
+            sr_signal = "Near Resistance"
+
+    elif support is not None:
+        if current_price <= support * 1.02:
+            sr_signal = "Near Support"
+
+
+
+    stochastic = calculate_stochastic(analysis)
+
+    analysis["STOCHASTIC_K"] = stochastic["STOCHASTIC_K"]
+    analysis["STOCHASTIC_D"] = stochastic["STOCHASTIC_D"]
+
+    current_k = analysis["STOCHASTIC_K"].iloc[-1]
+    current_d = analysis["STOCHASTIC_D"].iloc[-1]
+
+    if current_k > 80:
+        stochastic_signal = "Overbought"
+
+    elif current_k < 20:
+        stochastic_signal = "Oversold"
+
+    elif current_k > current_d:
+        stochastic_signal = "Bullish"
+
+    else:
+        stochastic_signal = "Bearish"
+
+
+    # candlesticks
+    candlestick_patterns = detect_candlestick_patterns(
+        analysis
+    )
 
 
     metrics = StockMetrics(
@@ -233,6 +281,13 @@ def analyze_stock(
         di_signal=di_signal,
         obv=current_obv,
         obv_signal=obv_signal,
+        support=support,
+        resistance=resistance,
+        sr_signal=sr_signal,
+        stochastic_k=current_k,
+        stochastic_d=current_d,
+        stochastic_signal=stochastic_signal,
+        candlestick_patterns=candlestick_patterns,
     )
 
 
@@ -247,7 +302,7 @@ def analyze_stock(
             "RSI",
             "MACD",
             "MACD_SIGNAL",
-            "MACD_HISTOGRAM"
+            "MACD_HISTOGRAM",
             ]
         ].tail(30)
     )

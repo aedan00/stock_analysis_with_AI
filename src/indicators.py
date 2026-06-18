@@ -4,7 +4,9 @@ from config import (
     MACD_FAST_PERIOD,
     MACD_SLOW_PERIOD,
     MACD_SIGNAL_PERIOD,
-    ATR_PERIOD
+    ATR_PERIOD,
+    STOCHASTIC_PERIOD,
+    STOCHASTIC_SIGNAL,
 )
 
 def calculate_rsi(
@@ -331,3 +333,89 @@ def calculate_obv(
         obv,
         index=data.index,
     )
+
+
+
+def calculate_support_resistance(
+    data: pd.DataFrame,
+    lookback: int = 2,
+) -> tuple[float | None, float | None]:
+
+    highs = data["High"]
+    lows = data["Low"]
+
+    resistance = None
+    support = None
+
+    for i in range(
+        lookback,
+        len(data) - lookback,
+    ):
+
+        current_high = highs.iloc[i]
+
+        if (
+            current_high == highs.iloc[
+                i - lookback:i + lookback + 1
+            ].max()
+        ):
+            resistance = current_high
+
+        current_low = lows.iloc[i]
+
+        if (
+            current_low == lows.iloc[
+                i - lookback:i + lookback + 1
+            ].min()
+        ):
+            support = current_low
+
+    return support, resistance
+
+
+
+
+def calculate_stochastic(
+    data: pd.DataFrame,
+    period: int = STOCHASTIC_PERIOD,
+    signal_period: int = STOCHASTIC_SIGNAL,
+) -> pd.DataFrame:
+    """
+    Calculate the Stochastic Oscillator.
+
+    Returns:
+        DataFrame containing:
+        - STOCHASTIC_K
+        - STOCHASTIC_D
+    """
+
+    lowest_low = (
+        data["Low"]
+        .rolling(period)
+        .min()
+    )
+
+    highest_high = (
+        data["High"]
+        .rolling(period)
+        .max()
+    )
+
+    price_range = (highest_high - lowest_low).replace(0, pd.NA)
+    percent_k = (
+        (data["Close"] - lowest_low)
+        / price_range
+    ) * 100
+
+    percent_d = (
+        percent_k
+        .rolling(signal_period)
+        .mean()
+    )
+
+    stochastic = pd.DataFrame(index=data.index)
+
+    stochastic["STOCHASTIC_K"] = percent_k
+    stochastic["STOCHASTIC_D"] = percent_d
+
+    return stochastic

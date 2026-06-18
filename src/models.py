@@ -44,6 +44,20 @@ class StockMetrics:
     obv: float
     obv_signal: str
 
+    # support & resistance
+    support: float | None
+    resistance: float | None
+    sr_signal: str
+
+    #stochastic
+    stochastic_k: float
+    stochastic_d: float
+    stochastic_signal: str
+
+    #candlesticks
+    candlestick_patterns: list[str]
+
+
 @dataclass
 class Report:
     ticker: str
