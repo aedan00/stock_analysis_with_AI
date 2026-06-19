@@ -9,7 +9,7 @@ from chart_helpers import (
     plot_volume,
     plot_trend_strength,
 )
-
+from candlestick_helper import plot_candlestick
 
 REPORT_DIR = Path("reports")
 REPORT_DIR.mkdir(exist_ok=True)
@@ -27,6 +27,9 @@ def plot_stock(
 
     panels = []
 
+    panels.append(
+        plot_candlestick
+    )
 
     # Always include price
     panels.append(
@@ -74,8 +77,17 @@ def plot_stock(
 
     fig, axes = plt.subplots(
         nrows=len(panels),
-        figsize=(16, 5 * len(panels)),
-        sharex=True,
+        figsize=(16, 24),
+        gridspec_kw={
+            "height_ratios": [
+                3,  # candlestick
+                2,  # existing price chart
+                1,  # RSI
+                1,  # MACD
+                1,  # Volume
+                1,  # ADX
+            ]
+        }
     )
 
 
