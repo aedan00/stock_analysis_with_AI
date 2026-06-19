@@ -1,181 +1,117 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
-from matplotlib.ticker import FuncFormatter
+
+from chart_helpers import (
+    plot_price_chart,
+    plot_momentum,
+    plot_macd,
+    plot_volume,
+    plot_trend_strength,
+)
+
 
 REPORT_DIR = Path("reports")
 REPORT_DIR.mkdir(exist_ok=True)
+
 
 def plot_stock(
     data: pd.DataFrame,
     ticker: str,
 ) -> str:
     """
-    Create stock price chart.
+    Create technical analysis dashboard.
 
-    Args:
-        data: Analysis DataFrame containing moving averages.
-        ticker: Stock ticker symbol.
-
-    Returns:
-        Path to saved chart.
+    Automatically plots available indicators.
     """
-    required_columns = [
-        "Close",
-        "MA50",
-        "MA200",
-        "RSI",
-        "MACD",
-        "MACD_SIGNAL",
-        "MACD_HISTOGRAM",
-    ]
 
-    missing = set(required_columns) - set(data.columns)
+    panels = []
 
-    if missing:
-        raise ValueError(
-            f"Missing columns: {missing}"
+
+    # Always include price
+    panels.append(
+        plot_price_chart
+    )
+
+
+    # Add momentum if available
+    if (
+        "RSI" in data.columns
+        or "STOCH_K" in data.columns
+    ):
+        panels.append(
+            plot_momentum
         )
 
-    # check available columns
-    print(
-        data.columns
-    )
+
+    # Add MACD if available
+    if (
+        "MACD" in data.columns
+        and "MACD_SIGNAL" in data.columns
+    ):
+        panels.append(
+            plot_macd
+        )
+
+
+    # Add volume if available
+    if (
+        "Volume" in data.columns
+    ):
+        panels.append(
+            plot_volume
+        )
+
+
+    # Add ADX if available
+    if (
+        "ADX" in data.columns
+    ):
+        panels.append(
+            plot_trend_strength
+        )
+
 
     fig, axes = plt.subplots(
-        nrows=4,
-        ncols=1,
-        figsize=(14, 14),
+        nrows=len(panels),
+        figsize=(16, 5 * len(panels)),
         sharex=True,
-)
-
-    #price, MA50, MA200
-    axes[0].plot(
-        data.index,
-        data["Close"],
-        label="Close Price",
-        linewidth=2,
     )
 
-    axes[0].plot(
-        data.index,
-        data["MA50"],
-        label="50-Day MA",
-    )
 
-    axes[0].plot(
-        data.index,
-        data["MA200"],
-        label="200-Day MA",
-    )
-
-    axes[0].set_title(f"{ticker} Stock Price")
-    axes[0].set_ylabel("Price ($)")
-    axes[0].grid(True)
-    axes[0].legend()
+    # Handle single chart case
+    if len(panels) == 1:
+        axes = [axes]
 
 
-    #RSI
-    axes[1].plot(
-        data.index,
-        data["RSI"],
-        label="RSI",
-        linewidth=2,
-    )
-
-    axes[1].axhline(
-        y=30,
-        color="green",
-        linestyle="--",
-        label="Oversold (30)",
-    )
-
-    axes[1].axhline(
-        y=70,
-        color="red",
-        linestyle="--",
-        label="Overbought (70)",
-    )
-
-    axes[1].set_title("RSI")
-    axes[1].set_ylabel("RSI")
-    axes[1].set_ylim(0, 100)
-    axes[1].grid(True)
-    axes[1].legend()
-
-
-    #MACD, MACD_SIGNAL, MACD_HISTOGRAM
-    axes[2].plot(
-        data.index,
-        data["MACD"],
-        label="MACD",
-        linewidth=2,
-    )
-
-    axes[2].plot(
-        data.index,
-        data["MACD_SIGNAL"],
-        label="MACD SIGNAL",
-    )
-
-    axes[2].bar(
-        data.index,
-        data["MACD_HISTOGRAM"],
-        label="MACD HISTOGRAM",
-    )
-
-    axes[2].axhline(
-        y=0,
-        color="black",
-        linestyle="--",
-        linewidth=1,
-    )
-
-    axes[2].set_title(f"{ticker} MACD, MACD SIGNAL and MACD HISTOGRAM")
-    axes[2].set_xlabel("Date")
-    axes[2].set_ylabel("Price ($)")
-    axes[2].grid(True)
-    axes[2].legend()
-
-
-    # Volume
-    colors = [
-        "green" if close >= open else "red"
-        for close, open in zip(
-            data["Close"],
-            data["Open"]
+    for ax, panel in zip(
+        axes,
+        panels,
+    ):
+        panel(
+            ax,
+            data,
+            ticker,
         )
-    ]
-    axes[3].bar(
-        data.index,
-        data["Volume"],
-        label="Volume",
-        color=colors,
-    )
 
-    axes[3].plot(
-        data.index,
-        data["AVG_VOLUME20"],
-        label="20-Day Average Volume",
-        color="orange",
-        linewidth=2,
-    )
 
-    axes[3].set_title("Trading Volume")
-    axes[3].set_ylabel("Shares")
-    axes[3].yaxis.set_major_formatter(
-        FuncFormatter(
-            lambda x, _: f"{x/1_000_000:.1f}M"
-        )
-    )
-    axes[3].grid(True)
-    axes[3].legend()
-
-    filename = REPORT_DIR / f"{ticker}_chart.png"
-
-    #prevent tight layout between charts
     fig.tight_layout()
-    fig.savefig(filename)
+
+
+    filename = (
+        REPORT_DIR
+        / f"{ticker}_technical_dashboard.png"
+    )
+
+
+    fig.savefig(
+        filename,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+
     plt.close()
+
 
     return str(filename)
