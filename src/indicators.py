@@ -7,6 +7,7 @@ from config import (
     ATR_PERIOD,
     STOCHASTIC_PERIOD,
     STOCHASTIC_SIGNAL,
+    LOOKBACK_PERIOD,
 )
 
 def calculate_rsi(
@@ -486,3 +487,60 @@ def calculate_pivot_points(
     )
 
     return pivots
+
+
+
+#fibonacci
+def calculate_fibonacci_levels(
+    data: pd.DataFrame,
+    lookback: int = LOOKBACK_PERIOD,
+) -> pd.DataFrame:
+    """
+    Calculate Fibonacci retracement levels over a lookback window.
+    """
+
+    highest_high = (
+        data["High"]
+        .rolling(lookback)
+        .max()
+    )
+
+    lowest_low = (
+        data["Low"]
+        .rolling(lookback)
+        .min()
+    )
+
+    price_range = highest_high - lowest_low
+
+    fibonacci = pd.DataFrame(index=data.index)
+
+    fibonacci["FIB_HIGH"] = highest_high
+    fibonacci["FIB_LOW"] = lowest_low
+
+    fibonacci["FIB_23_6"] = (
+        highest_high
+        - price_range * 0.236
+    )
+
+    fibonacci["FIB_38_2"] = (
+        highest_high
+        - price_range * 0.382
+    )
+
+    fibonacci["FIB_50"] = (
+        highest_high
+        - price_range * 0.500
+    )
+
+    fibonacci["FIB_61_8"] = (
+        highest_high
+        - price_range * 0.618
+    )
+
+    fibonacci["FIB_78_6"] = (
+        highest_high
+        - price_range * 0.786
+    )
+    # return a new dataFrame that has the same index as the original dataFrame with these columns
+    return fibonacci

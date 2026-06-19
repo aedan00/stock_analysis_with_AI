@@ -3,7 +3,7 @@ from typing import Any
 from indicators import (calculate_rsi, calculate_macd, calculate_atr, 
                         calculate_bollinger_bands, calculate_adx, 
                         calculate_obv, calculate_support_resistance, 
-                        calculate_stochastic, calculate_pivot_points,)
+                        calculate_stochastic, calculate_pivot_points, calculate_fibonacci_levels)
 from candlesticks import detect_candlestick_patterns
 from models import StockMetrics
 from config import (
@@ -292,6 +292,42 @@ def analyze_stock(
         pivot_signal = "Bearish Below Pivot"
 
 
+
+    fib = calculate_fibonacci_levels(
+        analysis
+    )
+
+    # append fib columns to analysis columns
+    analysis[
+        [
+            "FIB_HIGH",
+            "FIB_LOW",
+            "FIB_23_6",
+            "FIB_38_2",
+            "FIB_50",
+            "FIB_61_8",
+            "FIB_78_6",
+        ]
+    ] = fib
+
+    current_price = analysis["Close"].iloc[-1]
+
+    levels = {
+        "23.6%": analysis["FIB_23_6"].iloc[-1],
+        "38.2%": analysis["FIB_38_2"].iloc[-1],
+        "50%": analysis["FIB_50"].iloc[-1],
+        "61.8%": analysis["FIB_61_8"].iloc[-1],
+        "78.6%": analysis["FIB_78_6"].iloc[-1],
+    }
+
+    closest_level = min(
+        levels,
+        key=lambda level: abs(current_price - levels[level])
+    )
+    fib_signal = f"Near {closest_level} retracement"
+
+
+
     metrics = StockMetrics(
         latest_price=end_price,
         total_return=total_return,
@@ -334,6 +370,12 @@ def analyze_stock(
         pivot_s2=analysis["S2"].iloc[-1],
         pivot_s3=analysis["S3"].iloc[-1],
         pivot_signal=pivot_signal,
+        fib_23_6=levels["23.6%"],
+        fib_38_2=levels["38.2%"],
+        fib_50=levels["50%"],
+        fib_61_8=levels["61.8%"],
+        fib_78_6=levels["78.6%"],
+        fib_signal=fib_signal,
 
     )
 

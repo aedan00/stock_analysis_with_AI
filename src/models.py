@@ -67,6 +67,13 @@ class StockMetrics:
     pivot_s3: float
     pivot_signal: str
 
+    # fib
+    fib_23_6: float
+    fib_38_2: float
+    fib_50: float
+    fib_61_8: float
+    fib_78_6: float
+    fib_signal: str
 
 @dataclass
 class Report:

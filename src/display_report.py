@@ -198,6 +198,33 @@ def display_report(
     )
 
 
+    #fib
+    print(
+        f"23.6%: "
+        f"{report.metrics.fib_23_6:.2f}"
+    )
+    print(
+        f"38.2%: "
+        f"{report.metrics.fib_38_2:.2f}"
+    )
+    print(
+        f"50%: "
+        f"{report.metrics.fib_50:.2f}"
+    )
+    print(
+        f"61.8%: "
+        f"{report.metrics.fib_61_8:.2f}"
+    )
+    print(
+        f"78.6%: "
+        f"{report.metrics.fib_78_6:.2f}"
+    )
+    print(
+        f"Fib Signal: "
+        f"{report.metrics.fib_signal}\n"
+    )
+
+
     print(
         f"\nChart saved to:\n"
         f"{report.chart}"
