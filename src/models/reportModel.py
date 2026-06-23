@@ -5,6 +5,9 @@ from models.technical import TechnicalMetrics
 @dataclass
 class Report:
     ticker: str
-    technical: TechnicalMetrics
+    metrics: TechnicalMetrics
  #   fundamental: FundamentalMetrics
     chart: str
+
+
+

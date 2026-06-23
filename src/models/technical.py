@@ -18,10 +18,3 @@ class TechnicalMetrics:
     volatilityMetrics: VolatilityMetrics
     priceLevelMetrics: PriceLevelMetrics
     candlesticksMetrics: CandlestickMetrics
-
-
-@dataclass
-class Report:
-    ticker: str
-    metrics: TechnicalMetrics
-    chart: str

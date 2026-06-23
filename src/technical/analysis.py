@@ -1,10 +1,10 @@
 import pandas as pd
 from typing import Any
-from indicators import (calculate_rsi, calculate_macd, calculate_atr, 
+from technical.indicators import (calculate_rsi, calculate_macd, calculate_atr, 
                         calculate_bollinger_bands, calculate_adx, 
                         calculate_obv, calculate_support_resistance, 
                         calculate_stochastic, calculate_pivot_points, calculate_fibonacci_levels)
-from candlesticks import detect_candlestick_patterns
+from technical.candlesticks import detect_candlestick_patterns
 from models.technical import TechnicalMetrics
 from models.performance import PerformanceMetrics
 from models.trend import TrendMetrics

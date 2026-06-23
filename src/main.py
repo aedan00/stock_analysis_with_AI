@@ -1,8 +1,8 @@
 from data import get_stock_data
-from charts import plot_stock
+from technical.charts import plot_stock
 from report import create_report
 from display_report import display_report
-from analysis import analyze_stock
+from technical.analysis import analyze_stock
 
 
 def main():

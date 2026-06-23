@@ -1,5 +1,5 @@
 from typing import Any
-from models.technical import Report
+from models.reportModel import Report
 
 def display_report(
     report: Report,

@@ -2,14 +2,14 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from chart_helpers import (
+from technical.chart_helpers import (
     plot_price_chart,
     plot_momentum,
     plot_macd,
     plot_volume,
     plot_trend_strength,
 )
-from candlestick_helper import plot_candlestick
+from technical.candlestick_helper import plot_candlestick
 
 REPORT_DIR = Path("reports")
 REPORT_DIR.mkdir(exist_ok=True)
