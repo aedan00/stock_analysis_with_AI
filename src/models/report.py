@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from fundamental import FundamentalMetrics
-from technical import TechnicalMetrics
+from models.fundamental import FundamentalMetrics
+from models.technical import TechnicalMetrics
 
 @dataclass
 class Report:
     ticker: str
     technical: TechnicalMetrics
-    fundamental: FundamentalMetrics
+ #   fundamental: FundamentalMetrics
     chart: str

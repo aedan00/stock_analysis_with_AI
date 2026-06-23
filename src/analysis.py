@@ -5,7 +5,15 @@ from indicators import (calculate_rsi, calculate_macd, calculate_atr,
                         calculate_obv, calculate_support_resistance, 
                         calculate_stochastic, calculate_pivot_points, calculate_fibonacci_levels)
 from candlesticks import detect_candlestick_patterns
-from models import StockMetrics
+from models.technical import TechnicalMetrics
+from models.performance import PerformanceMetrics
+from models.trend import TrendMetrics
+from models.momentum import MomentumMetrics
+from models.volume import VolumeMetrics
+from models.volatility import VolatilityMetrics
+from models.price_levels import PriceLevelMetrics
+from models.candlestick import CandlestickMetrics
+
 from config import (
     TRADING_DAYS_PER_YEAR,
     SHORT_MA_WINDOW,
@@ -252,7 +260,9 @@ def analyze_stock(
     candlestick_patterns = detect_candlestick_patterns(
         analysis
     )
-
+    candlestickMetrics = CandlestickMetrics(
+        candlestick_patterns
+    )
 
     #pivot
     pivot_data = calculate_pivot_points(
@@ -326,20 +336,40 @@ def analyze_stock(
     )
     fib_signal = f"Near {closest_level} retracement"
 
-
-
-    metrics = StockMetrics(
+    performanceMetrics=PerformanceMetrics(
         latest_price=end_price,
         total_return=total_return,
-        annualized_volatility=annualized_volatility,
+        annualized_volatility=annualized_volatility,       
+    )
+
+    trendMetrics = TrendMetrics(
         trend=trend,
+        current_adx=current_adx,
+        plus_di=plus_di,
+        minus_di=minus_di,
+        adx_signal=adx_signal,
+        di_signal=di_signal,
+    )   
+
+    momentumMetrics=MomentumMetrics(
         rsi=currentRsi,
         rsi_signal=rsi_signal,
         macd_signal=macd_signal,
+        stochastic_k=current_k,
+        stochastic_d=current_d,
+        stochastic_signal=stochastic_signal,
+    )
+    
+    volumeMetrics = VolumeMetrics(
         current_volume=current_volume,
         average_volume=average_volume,
         relative_volume=relative_volume,
         volume_signal=volume_signal,
+        obv=current_obv,
+        obv_signal=obv_signal,
+    )
+
+    volatilityMetrics = VolatilityMetrics(
         atr=current_atr,
         atr_percent=atr_percent,
         volatility=volatility,
@@ -348,20 +378,13 @@ def analyze_stock(
         bb_lower=lower,
         bb_signal=bb_signal,
         bb_bandwidth=bb_bandwidth,
-        current_adx=current_adx,
-        plus_di=plus_di,
-        minus_di=minus_di,
-        adx_signal=adx_signal,
-        di_signal=di_signal,
-        obv=current_obv,
-        obv_signal=obv_signal,
+    )
+
+    priceLevelMetrics = PriceLevelMetrics(
         support=support,
         resistance=resistance,
         sr_signal=sr_signal,
-        stochastic_k=current_k,
-        stochastic_d=current_d,
-        stochastic_signal=stochastic_signal,
-        candlestick_patterns=candlestick_patterns,
+
         pivot=pivot,
         pivot_r1=r1,
         pivot_r2=analysis["R2"].iloc[-1],
@@ -376,7 +399,16 @@ def analyze_stock(
         fib_61_8=levels["61.8%"],
         fib_78_6=levels["78.6%"],
         fib_signal=fib_signal,
+    )
 
+    metrics = TechnicalMetrics(
+        performanceMetrics,
+        trendMetrics, 
+        momentumMetrics,
+        volumeMetrics,
+        volatilityMetrics,
+        priceLevelMetrics,
+        candlestickMetrics,
     )
 
 

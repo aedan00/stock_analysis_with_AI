@@ -1,5 +1,5 @@
 from typing import Any
-from models import Report
+from models.technical import Report
 
 def create_report(
     ticker: str,

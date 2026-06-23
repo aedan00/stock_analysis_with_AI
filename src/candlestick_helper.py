@@ -98,3 +98,6 @@ def plot_candlestick(
         ],
         rotation=45,
     )
+
+    ax.set_xlim(-0.5, len(data) - 0.5)
+    ax.autoscale(enable=True, axis="y")

@@ -4,7 +4,6 @@ from dataclasses import dataclass
 class MomentumMetrics:
     rsi: float
     rsi_signal: str
-
     macd_signal: str
 
     stochastic_k: float

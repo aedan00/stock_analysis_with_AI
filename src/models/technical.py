@@ -1,18 +1,27 @@
 from dataclasses import dataclass
-from candlestick import CandlestickMetrics
-from price_levels import PriceLevelMetrics
-from volatility import VolatilityMetrics
-from volume import VolumeMetrics
-from momentum import MomentumMetrics
-from trend import TrendMetrics
-from performance import PerformanceMetrics
+
+from models.performance import PerformanceMetrics
+from models.trend import TrendMetrics
+from models.momentum import MomentumMetrics
+from models.volume import VolumeMetrics
+from models.volatility import VolatilityMetrics
+from models.price_levels import PriceLevelMetrics
+from models.candlestick import CandlestickMetrics
 
 @dataclass
 class TechnicalMetrics:
-    performance: PerformanceMetrics
-    trend: TrendMetrics
-    momentum: MomentumMetrics
-    volume: VolumeMetrics
-    volatility: VolatilityMetrics
-    price_levels: PriceLevelMetrics
-    candlesticks: CandlestickMetrics
+
+    performanceMetrics: PerformanceMetrics
+    trendMetrics: TrendMetrics
+    momentumMetrics: MomentumMetrics
+    volumeMetrics: VolumeMetrics
+    volatilityMetrics: VolatilityMetrics
+    priceLevelMetrics: PriceLevelMetrics
+    candlesticksMetrics: CandlestickMetrics
+
+
+@dataclass
+class Report:
+    ticker: str
+    metrics: TechnicalMetrics
+    chart: str

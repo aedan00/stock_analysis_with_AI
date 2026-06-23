@@ -21,15 +21,11 @@ def calculate_rsi(
 
     loss = -delta.clip(upper=0)
 
-    avg_gain = (
-        gain.rolling(period)
-        .mean()
-    )
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
 
-    avg_loss = (
-        loss.rolling(period)
-        .mean()
-    )
+    avg_gain = gain.ewm(alpha=1/period, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1/period, adjust=False).mean()
 
     rs = avg_gain / avg_loss
 
@@ -111,9 +107,7 @@ def calculate_atr(
     ).max(axis=1)
 
     atr = (
-        true_range
-        .rolling(period)
-        .mean()
+        true_range.ewm(alpha=1/period, adjust=False).mean() 
     )
 
     return atr
