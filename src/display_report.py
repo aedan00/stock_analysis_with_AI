@@ -10,6 +10,10 @@ def display_report(
 
     print(f"\n============={report.ticker} Investment Report =============\n")
 
+    print(
+        "\n============= Technical Analysis ==============\n"
+    )
+
     print(f"Ticker: {report.ticker}")
 
     print(
