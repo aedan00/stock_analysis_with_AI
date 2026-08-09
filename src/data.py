@@ -13,3 +13,14 @@ def get_stock_data(
     return stock.history(
         period=DATA_PERIOD
     )
+
+
+def get_fundamental_data(ticker: str) -> dict:
+    stock = yf.Ticker(ticker)
+
+    return {
+        "info": stock.info,
+        "income_statement": stock.income_stmt,
+        "balance_sheet": stock.balance_sheet,
+        "cash_flow": stock.cashflow,
+    }
