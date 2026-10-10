@@ -103,6 +103,7 @@ def build_biotech_comparison_metrics(
         "cash_position": {
             "total_cash": total_cash,
             "free_cash_flow": free_cash_flow,
+            "free_cash_flow_margin": _safe_divide(free_cash_flow, revenue),
         },
         "balance_sheet": {
             "total_debt": total_debt,

@@ -24,7 +24,8 @@ DEFAULT_BIOTECH_TICKERS = [
 def biotech_score(comparison_metrics: dict) -> float:
     """
     Lightweight biotech comparison score using a few normalized inputs.
-    This is intentionally simple and easy to extend later.
+    Free-cash-flow margin contributes up to +/-25 points, with its value
+    capped to the range from -50% to +50%.
     """
     score = 0.0
 
@@ -37,9 +38,9 @@ def biotech_score(comparison_metrics: dict) -> float:
     if current_ratio is not None:
         score += min(current_ratio, 3.0) * 10
 
-    free_cash_flow = cash_position.get("free_cash_flow")
-    if free_cash_flow is not None:
-        score += min(abs(free_cash_flow) / 1_000_000, 50.0) * 0.5
+    free_cash_flow_margin = cash_position.get("free_cash_flow_margin")
+    if free_cash_flow_margin is not None:
+        score += min(max(free_cash_flow_margin, -0.5), 0.5) * 50
 
     net_margin = profitability.get("net_margin")
     if net_margin is not None:
@@ -68,16 +69,10 @@ def format_percentage(value: float | None) -> str:
     return "N/A" if value is None else f"{value:.1%}"
 
 
-def compare_biotech_tickers(tickers: list[str]):
+def compare_biotech_tickers(comparison_metrics_by_ticker: dict[str, dict]):
     ranked_rows = []
 
-    for ticker in tickers:
-        raw_data = get_stock_data(ticker)
-        if raw_data.empty:
-            continue
-
-        fundamental_data = get_fundamental_data(ticker)
-        comparison_metrics = build_biotech_comparison_metrics(ticker, fundamental_data)
+    for ticker, comparison_metrics in comparison_metrics_by_ticker.items():
         score = biotech_score(comparison_metrics)
         ranked_rows.append({
             "ticker": ticker,
@@ -85,6 +80,7 @@ def compare_biotech_tickers(tickers: list[str]):
             "score": score,
             "market_cap": comparison_metrics.get("market_cap"),
             "free_cash_flow": comparison_metrics.get("cash_position", {}).get("free_cash_flow"),
+            "free_cash_flow_margin": comparison_metrics.get("cash_position", {}).get("free_cash_flow_margin"),
             "revenue_growth": comparison_metrics.get("growth", {}).get("revenue_growth"),
             "net_margin": comparison_metrics.get("profitability", {}).get("net_margin"),
         })
@@ -94,46 +90,49 @@ def compare_biotech_tickers(tickers: list[str]):
     print("\n=== Ranked biotech comparison ===")
     print("Score is a project-specific heuristic, not an official financial metric.")
     if not ranked_rows:
-        print("No companies could be ranked: Yahoo Finance returned no valid price history.")
+        print("No companies could be ranked: no comparison metrics were available.")
         return
 
-    print("{:<6} {:<22} {:>8} {:>12} {:>12} {:>10} {:>10}".format(
+    print("{:<6} {:<22} {:>8} {:>12} {:>12} {:>12} {:>10} {:>10}".format(
         "Ticker",
         "Company",
         "Score",
         "Mkt Cap",
         "FCF",
+        "FCF Margin",
         "Rev Grw",
         "Net Margin",
     ))
-    print("-" * 88)
+    print("-" * 102)
 
     for row in ranked_rows:
         company = row["company"] or "N/A"
         market_cap = format_currency(row["market_cap"])
         free_cash_flow = format_currency(row["free_cash_flow"])
+        free_cash_flow_margin = format_percentage(row["free_cash_flow_margin"])
         revenue_growth = format_percentage(row["revenue_growth"])
         net_margin = format_percentage(row["net_margin"])
 
         print(
-            "{:<6} {:<22} {:>8.2f} {:>12} {:>12} {:>10} {:>10}".format(
+            "{:<6} {:<22} {:>8.2f} {:>12} {:>12} {:>12} {:>10} {:>10}".format(
                 row["ticker"],
                 company[:22],
                 row["score"],
                 market_cap,
                 free_cash_flow,
+                free_cash_flow_margin,
                 revenue_growth,
                 net_margin,
             )
         )
 
 
-def analyze_one_ticker(ticker: str):
+def analyze_one_ticker(ticker: str) -> dict | None:
     raw_data = get_stock_data(ticker)
 
     if raw_data.empty:
         print(f"Skipping {ticker}: no valid price history returned by Yahoo Finance.")
-        return
+        return None
 
     analysis_data, metrics = analyze_stock(raw_data)
     fundamental_data = get_fundamental_data(ticker)
@@ -152,10 +151,23 @@ def analyze_one_ticker(ticker: str):
     report = create_report(ticker, metrics, chart)
     display_report(report)
     display_fundamental_report(fundamental_metrics)
+    return comparison_metrics
+
+
+def get_comparison_metrics_for_tickers(tickers: list[str]) -> dict[str, dict]:
+    comparison_metrics_by_ticker = {}
+
+    for ticker in tickers:
+        fundamental_data = get_fundamental_data(ticker)
+        comparison_metrics_by_ticker[ticker] = build_biotech_comparison_metrics(
+            ticker,
+            fundamental_data,
+        )
+
+    return comparison_metrics_by_ticker
 
 
 def main():
-    # Step 1: keep single-ticker support, but default to a biotech basket
     raw_input = input(
         "Enter ticker(s), or press Enter to use the default biotech basket: "
     ).strip()
@@ -165,10 +177,20 @@ def main():
     else:
         tickers = DEFAULT_BIOTECH_TICKERS
 
-    for ticker in tickers:
-        analyze_one_ticker(ticker)
+    comparison_only = input(
+        "Comparison only (skip technical analysis and charts)? [Y/n]: "
+    ).strip().lower() not in {"n", "no"}
 
-    compare_biotech_tickers(tickers)
+    if comparison_only:
+        comparison_metrics_by_ticker = get_comparison_metrics_for_tickers(tickers)
+    else:
+        comparison_metrics_by_ticker = {}
+        for ticker in tickers:
+            comparison_metrics = analyze_one_ticker(ticker)
+            if comparison_metrics is not None:
+                comparison_metrics_by_ticker[ticker] = comparison_metrics
+
+    compare_biotech_tickers(comparison_metrics_by_ticker)
 
 
 if __name__ == "__main__":
