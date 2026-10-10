@@ -9,10 +9,14 @@ def get_stock_data(
 ) -> pd.DataFrame:
 
     stock = yf.Ticker(ticker)
-
-    return stock.history(
+    data = stock.history(
         period=DATA_PERIOD
     )
+
+    if data.empty or "Close" not in data.columns:
+        return pd.DataFrame()
+
+    return data
 
 
 def get_fundamental_data(ticker: str) -> dict:

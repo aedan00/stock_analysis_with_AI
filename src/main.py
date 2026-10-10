@@ -7,51 +7,57 @@ from display_report import display_report
 from technical.analysis import analyze_stock
 
 
+DEFAULT_BIOTECH_TICKERS = [
+    "VRTX",
+    "REGN",
+    "GILD",
+    "AMGN",
+    "BMRN",
+    "EXEL",
+    "ALNY",
+    "INCY",
+    "NTLA",
+    "SGEN",
+]
 
-def main():
 
-    ticker: str = input(
-        "Enter ticker: "
-    ).upper()
-
+def analyze_one_ticker(ticker: str):
     raw_data = get_stock_data(ticker)
 
+    if raw_data.empty:
+        print(f"Skipping {ticker}: no valid price history returned by Yahoo Finance.")
+        return
+
     analysis_data, metrics = analyze_stock(raw_data)
+    fundamental_data = get_fundamental_data(ticker)
+    fundamental_metrics = analyze_fundamentals(fundamental_data)
 
-    fundamental_data = get_fundamental_data(
-        ticker
-    )
-
-    fundamental_metrics = analyze_fundamentals(
-        fundamental_data
-    )
-
-
-    print("Got fundamental metrics")
-
+    print(f"\n=== {ticker} ===")
+    print("Technical summary:")
+    print(metrics)
+    print("\nFundamental summary:")
     print(fundamental_metrics)
 
-    print("After print")
+    chart = plot_stock(analysis_data, ticker)
+    report = create_report(ticker, metrics, chart)
+    display_report(report)
+    display_fundamental_report(fundamental_metrics)
 
 
-    chart = plot_stock(
-        analysis_data,
-        ticker
-    )
+def main():
+    # Step 1: keep single-ticker support, but default to a biotech basket
+    raw_input = input(
+        "Enter ticker(s), or press Enter to use the default biotech basket: "
+    ).strip()
 
-    report = create_report(
-        ticker,
-        metrics,
-        chart
-    )
+    if raw_input:
+        tickers = [symbol.strip().upper() for symbol in raw_input.split(",") if symbol.strip()]
+    else:
+        tickers = DEFAULT_BIOTECH_TICKERS
 
-    display_report(
-        report
-    )
+    for ticker in tickers:
+        analyze_one_ticker(ticker)
 
-    display_fundamental_report(
-        fundamental_metrics
-    )
 
 if __name__ == "__main__":
     main()

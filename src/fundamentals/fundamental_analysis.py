@@ -1,6 +1,22 @@
 import pandas as pd
 
 
+def _safe_divide(
+    numerator,
+    denominator,
+):
+    """
+    Return a safe ratio, or None if either side is missing or the denominator is zero.
+    """
+    if numerator is None or denominator is None or denominator == 0:
+        return None
+
+    try:
+        return numerator / denominator
+    except TypeError:
+        return None
+
+
 def _get_value(
     statement: pd.DataFrame,
     field: str,
@@ -128,17 +144,18 @@ def analyze_fundamentals(
     # Profitability
     # --------------------------------------------------
 
-    gross_margin = None
-    operating_margin = None
-    net_margin = None
-
-    if revenue is not None:
-
-        gross_margin = gross_profit / revenue
-
-        operating_margin = operating_income / revenue
-
-        net_margin = net_income / revenue
+    gross_margin = _safe_divide(
+        gross_profit,
+        revenue,
+    )
+    operating_margin = _safe_divide(
+        operating_income,
+        revenue,
+    )
+    net_margin = _safe_divide(
+        net_income,
+        revenue,
+    )
 
     # --------------------------------------------------
     # Free cash flow
@@ -159,52 +176,37 @@ def analyze_fundamentals(
     # ROA
     # --------------------------------------------------
 
-    roa = None
-
-    if (
-        net_income is not None
-        and total_assets is not None
-    ):
-        roa = net_income / total_assets
+    roa = _safe_divide(
+        net_income,
+        total_assets,
+    )
 
     # --------------------------------------------------
     # ROE
     # --------------------------------------------------
 
-    roe = None
-
-    if (
-        net_income is not None
-        and equity is not None
-    ):
-        roe = net_income / equity
+    roe = _safe_divide(
+        net_income,
+        equity,
+    )
 
     # --------------------------------------------------
     # Debt / Equity
     # --------------------------------------------------
 
-    debt_to_equity = None
-
-    if (
-        total_debt is not None
-        and equity is not None
-    ):
-        debt_to_equity = total_debt / equity
+    debt_to_equity = _safe_divide(
+        total_debt,
+        equity,
+    )
 
     # --------------------------------------------------
     # Current ratio
     # --------------------------------------------------
 
-    current_ratio = None
-
-    if (
-        current_assets is not None
-        and current_liabilities is not None
-    ):
-        current_ratio = (
-            current_assets
-            / current_liabilities
-        )
+    current_ratio = _safe_divide(
+        current_assets,
+        current_liabilities,
+    )
 
     # --------------------------------------------------
     # Growth

@@ -33,6 +33,9 @@ def analyze_stock(
         A copy of the data with indicators and a metrics dictionary.
     """
 
+    if data.empty or "Close" not in data.columns:
+        raise ValueError("No valid price history available for technical analysis.")
+
     # Create independent analysis dataframe
     analysis = data.copy()
 
