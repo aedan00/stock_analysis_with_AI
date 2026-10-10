@@ -11,7 +11,8 @@ from technical.chart_helpers import (
 )
 from technical.candlestick_helper import plot_candlestick
 
-REPORT_DIR = Path("reports")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+REPORT_DIR = PROJECT_ROOT / "reports"
 REPORT_DIR.mkdir(exist_ok=True)
 
 
@@ -109,12 +110,15 @@ def plot_stock(
 
     fig.tight_layout()
 
+    safe_ticker = "".join(
+        ch for ch in str(ticker).upper()
+        if ch.isalnum() or ch in {"_", "-"}
+    )
 
     filename = (
         REPORT_DIR
-        / f"{ticker}_technical_dashboard.png"
+        / f"{safe_ticker}_technical_dashboard.png"
     )
-
 
     fig.savefig(
         filename,

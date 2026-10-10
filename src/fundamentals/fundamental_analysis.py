@@ -57,6 +57,79 @@ def _latest_value(
     return values.iloc[0]
 
 
+def build_biotech_comparison_metrics(
+    ticker: str,
+    fundamental_data: dict,
+) -> dict:
+    """
+    Build a normalized metric dictionary for biotech peer comparison.
+    This keeps the same fields across all names and makes ranking easier.
+    """
+    info = fundamental_data.get("info", {})
+    income = fundamental_data.get("income_statement")
+    balance = fundamental_data.get("balance_sheet")
+    cash_flow = fundamental_data.get("cash_flow")
+
+    total_cash = (
+        _latest_value(balance, "Cash And Cash Equivalents At Carrying Value")
+        or _latest_value(balance, "Cash")
+        or _latest_value(balance, "Cash And Cash Equivalents")
+    )
+
+    total_debt = _latest_value(balance, "Total Debt")
+    current_assets = _latest_value(balance, "Current Assets")
+    current_liabilities = _latest_value(balance, "Current Liabilities")
+    total_assets = _latest_value(balance, "Total Assets")
+    equity = _latest_value(balance, "Stockholders Equity")
+
+    revenue = _latest_value(income, "Total Revenue")
+    gross_profit = _latest_value(income, "Gross Profit")
+    operating_income = _latest_value(income, "Operating Income")
+    net_income = _latest_value(income, "Net Income")
+
+    operating_cash_flow = _latest_value(cash_flow, "Operating Cash Flow")
+    capital_expenditure = _latest_value(cash_flow, "Capital Expenditure")
+    free_cash_flow = None
+    if operating_cash_flow is not None and capital_expenditure is not None:
+        free_cash_flow = operating_cash_flow + capital_expenditure
+
+    return {
+        "ticker": ticker,
+        "company": info.get("longName"),
+        "sector": info.get("sector"),
+        "industry": info.get("industry"),
+        "market_cap": info.get("marketCap"),
+        "enterprise_value": info.get("enterpriseValue"),
+        "cash_position": {
+            "total_cash": total_cash,
+            "free_cash_flow": free_cash_flow,
+        },
+        "balance_sheet": {
+            "total_debt": total_debt,
+            "current_ratio": _safe_divide(current_assets, current_liabilities),
+            "debt_to_equity": _safe_divide(total_debt, equity),
+        },
+        "profitability": {
+            "gross_margin": _safe_divide(gross_profit, revenue),
+            "operating_margin": _safe_divide(operating_income, revenue),
+            "net_margin": _safe_divide(net_income, revenue),
+            "roe": _safe_divide(net_income, equity),
+            "roa": _safe_divide(net_income, total_assets),
+        },
+        "growth": {
+            "revenue_growth": info.get("revenueGrowth"),
+            "earnings_growth": info.get("earningsGrowth"),
+        },
+        "valuation": {
+            "trailing_pe": info.get("trailingPE"),
+            "forward_pe": info.get("forwardPE"),
+            "price_to_sales": info.get("priceToSalesTrailing12Months"),
+            "price_to_book": info.get("priceToBook"),
+            "enterprise_to_ebitda": info.get("enterpriseToEbitda"),
+        },
+    }
+
+
 def analyze_fundamentals(
     fundamental_data: dict
 ) -> dict:
