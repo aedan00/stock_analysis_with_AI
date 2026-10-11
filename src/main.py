@@ -180,6 +180,15 @@ def print_comparison_section(title: str, rows: list[dict]) -> None:
             periods_label,
         ))
 
+    print("\nR&D investment context (informational only; not scored):")
+    print("{:<6} {:>14} {:>14}".format("Ticker", "R&D expense", "R&D / Revenue"))
+    for row in rows:
+        print("{:<6} {:>14} {:>14}".format(
+            row["ticker"],
+            format_currency(row["research_and_development_expense"]),
+            format_percentage(row["research_and_development_intensity"]),
+        ))
+
     print("\nScore breakdown (points; N/A means unavailable):")
     print("{:<6} {:>10} {:>12} {:>12} {:>16}".format(
         "Ticker",
@@ -229,6 +238,8 @@ def compare_biotech_tickers(comparison_metrics_by_ticker: dict[str, dict]):
             "cash_runway_periods": comparison_metrics.get("cash_position", {}).get("cash_runway_periods"),
             "balance_sheet_as_of": comparison_metrics.get("statement_periods", {}).get("balance_sheet_as_of"),
             "operating_cash_flow_periods": comparison_metrics.get("statement_periods", {}).get("operating_cash_flow_periods", []),
+            "research_and_development_expense": comparison_metrics.get("research_and_development", {}).get("expense"),
+            "research_and_development_intensity": comparison_metrics.get("research_and_development", {}).get("intensity"),
             "free_cash_flow_margin": comparison_metrics.get("cash_position", {}).get("free_cash_flow_margin"),
             "revenue_growth": comparison_metrics.get("growth", {}).get("revenue_growth"),
             "net_margin": comparison_metrics.get("profitability", {}).get("net_margin"),

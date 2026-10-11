@@ -113,6 +113,24 @@ def build_biotech_comparison_metrics(
     equity = _latest_value(balance, "Stockholders Equity")
 
     revenue = _latest_value(income, "Total Revenue")
+    research_and_development = _latest_value(income, "Research And Development")
+    if research_and_development is not None:
+        try:
+            if not math.isfinite(research_and_development):
+                research_and_development = None
+        except (TypeError, ValueError):
+            research_and_development = None
+    research_and_development_intensity = _safe_divide(
+        research_and_development,
+        revenue,
+    )
+    if research_and_development_intensity is not None:
+        try:
+            if not math.isfinite(research_and_development_intensity):
+                research_and_development_intensity = None
+        except (TypeError, ValueError):
+            research_and_development_intensity = None
+
     gross_profit = _latest_value(income, "Gross Profit")
     operating_income = _latest_value(income, "Operating Income")
     net_income = _latest_value(income, "Net Income")
@@ -168,6 +186,10 @@ def build_biotech_comparison_metrics(
         "statement_periods": {
             "balance_sheet_as_of": balance_sheet_as_of,
             "operating_cash_flow_periods": operating_cash_flow_periods,
+        },
+        "research_and_development": {
+            "expense": research_and_development,
+            "intensity": research_and_development_intensity,
         },
         "balance_sheet": {
             "total_debt": total_debt,

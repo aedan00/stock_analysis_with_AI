@@ -154,6 +154,10 @@ class BiotechScoreTests(unittest.TestCase):
                 "2023-12-31",
             ],
         }
+        metrics["research_and_development"] = {
+            "expense": 1_200_000_000,
+            "intensity": 0.2,
+        }
         output = StringIO()
 
         with redirect_stdout(output):
@@ -172,6 +176,9 @@ class BiotechScoreTests(unittest.TestCase):
         self.assertIn("Statement periods", report)
         self.assertIn("2025-12-31", report)
         self.assertIn("2024-12-31, 2023-12-31", report)
+        self.assertIn("R&D investment context (informational only; not scored)", report)
+        self.assertIn("$1.20B", report)
+        self.assertIn("20.0%", report)
 
     def test_empty_comparison_prints_clear_message(self):
         output = StringIO()
@@ -254,6 +261,51 @@ class CashRunwayTests(unittest.TestCase):
             metrics["statement_periods"]["balance_sheet_as_of"],
             "2025-12-31",
         )
+
+    def test_rd_intensity_is_rd_expense_divided_by_revenue(self):
+        income_statement = pd.DataFrame(
+            {"2025-12-31": [2_000, 500]},
+            index=["Total Revenue", "Research And Development"],
+        )
+        metrics = build_biotech_comparison_metrics(
+            "TEST",
+            {
+                "info": {},
+                "income_statement": income_statement,
+                "balance_sheet": pd.DataFrame({"2025-12-31": [2_000, 0]}, index=[
+                    "Cash And Cash Equivalents At Carrying Value", "Total Debt",
+                ]),
+                "cash_flow": pd.DataFrame({"2025-12-31": [-100, -50]}, index=[
+                    "Operating Cash Flow", "Capital Expenditure",
+                ]),
+            },
+        )
+
+        rd_metrics = metrics["research_and_development"]
+        score_with_rd_data = biotech_score(metrics)
+        metrics.pop("research_and_development")
+
+        self.assertEqual(rd_metrics["expense"], 500)
+        self.assertEqual(rd_metrics["intensity"], 0.25)
+        self.assertEqual(score_with_rd_data, biotech_score(metrics))
+
+    def test_rd_intensity_is_unavailable_when_revenue_or_rd_is_missing(self):
+        for income_statement in (
+            pd.DataFrame({"2025-12-31": [None, 500]}, index=[
+                "Total Revenue", "Research And Development",
+            ]),
+            pd.DataFrame({"2025-12-31": [2_000]}, index=["Total Revenue"]),
+        ):
+            metrics = build_biotech_comparison_metrics(
+                "TEST",
+                {
+                    "info": {},
+                    "income_statement": income_statement,
+                    "balance_sheet": pd.DataFrame(),
+                    "cash_flow": pd.DataFrame(),
+                },
+            )
+            self.assertIsNone(metrics["research_and_development"]["intensity"])
 
     def test_missing_periods_are_ignored_in_average(self):
         metrics = self.build_metrics(
