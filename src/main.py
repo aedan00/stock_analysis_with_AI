@@ -1,3 +1,5 @@
+import math
+
 from data import get_fundamental_data, get_stock_data
 from fundamentals.display_fundamental import display_fundamental_report
 from fundamentals.fundamental_analysis import analyze_fundamentals, build_biotech_comparison_metrics
@@ -17,8 +19,18 @@ DEFAULT_BIOTECH_TICKERS = [
     # "ALNY",
     # "INCY",
     # "NTLA",
-    # "SGEN",
+     "SGEN",
 ]
+
+
+def _metric_is_available(value) -> bool:
+    if value is None:
+        return False
+
+    try:
+        return math.isfinite(value)
+    except (TypeError, ValueError):
+        return False
 
 
 def biotech_score(comparison_metrics: dict) -> float:
@@ -35,19 +47,19 @@ def biotech_score(comparison_metrics: dict) -> float:
     growth = comparison_metrics.get("growth", {})
 
     current_ratio = balance_sheet.get("current_ratio")
-    if current_ratio is not None:
+    if _metric_is_available(current_ratio):
         score += min(current_ratio, 3.0) * 10
 
     free_cash_flow_margin = cash_position.get("free_cash_flow_margin")
-    if free_cash_flow_margin is not None:
+    if _metric_is_available(free_cash_flow_margin):
         score += min(max(free_cash_flow_margin, -0.5), 0.5) * 50
 
     net_margin = profitability.get("net_margin")
-    if net_margin is not None:
+    if _metric_is_available(net_margin):
         score += min(max(net_margin, -0.5), 0.5) * 100
 
     revenue_growth = growth.get("revenue_growth")
-    if revenue_growth is not None:
+    if _metric_is_available(revenue_growth):
         score += min(max(revenue_growth, -0.5), 0.5) * 100
 
     return round(score, 2)
@@ -66,13 +78,29 @@ def format_currency(value: float | int | None) -> str:
 
 
 def format_percentage(value: float | None) -> str:
-    return "N/A" if value is None else f"{value:.1%}"
+    return "N/A" if not _metric_is_available(value) else f"{value:.1%}"
 
 
 def compare_biotech_tickers(comparison_metrics_by_ticker: dict[str, dict]):
     ranked_rows = []
+    skipped_tickers = []
 
     for ticker, comparison_metrics in comparison_metrics_by_ticker.items():
+        balance_sheet = comparison_metrics.get("balance_sheet", {})
+        cash_position = comparison_metrics.get("cash_position", {})
+        profitability = comparison_metrics.get("profitability", {})
+        growth = comparison_metrics.get("growth", {})
+        score_inputs = (
+            balance_sheet.get("current_ratio"),
+            cash_position.get("free_cash_flow_margin"),
+            profitability.get("net_margin"),
+            growth.get("revenue_growth"),
+        )
+        coverage = sum(_metric_is_available(value) for value in score_inputs)
+        if coverage == 0:
+            skipped_tickers.append(ticker)
+            continue
+
         score = biotech_score(comparison_metrics)
         ranked_rows.append({
             "ticker": ticker,
@@ -83,27 +111,35 @@ def compare_biotech_tickers(comparison_metrics_by_ticker: dict[str, dict]):
             "free_cash_flow_margin": comparison_metrics.get("cash_position", {}).get("free_cash_flow_margin"),
             "revenue_growth": comparison_metrics.get("growth", {}).get("revenue_growth"),
             "net_margin": comparison_metrics.get("profitability", {}).get("net_margin"),
+            "coverage": coverage,
         })
 
     ranked_rows.sort(key=lambda row: row["score"], reverse=True)
 
     print("\n=== Ranked biotech comparison ===")
     print("Score is a project-specific heuristic, not an official financial metric.")
+    for ticker in skipped_tickers:
+        print(f"Skipping {ticker}: no score metrics were available from Yahoo Finance.")
+
     if not ranked_rows:
         print("No companies could be ranked: no comparison metrics were available.")
         return
 
-    print("{:<6} {:<22} {:>8} {:>12} {:>12} {:>12} {:>10} {:>10}".format(
+    if any(row["coverage"] < 4 for row in ranked_rows):
+        print("Warning: incomplete scores use fewer metrics; compare those scores cautiously.")
+
+    print("{:<6} {:<22} {:>8} {:>9} {:>12} {:>12} {:>12} {:>10} {:>10}".format(
         "Ticker",
         "Company",
         "Score",
+        "Coverage",
         "Mkt Cap",
         "FCF",
         "FCF Margin",
         "Rev Grw",
         "Net Margin",
     ))
-    print("-" * 102)
+    print("-" * 112)
 
     for row in ranked_rows:
         company = row["company"] or "N/A"
@@ -114,10 +150,11 @@ def compare_biotech_tickers(comparison_metrics_by_ticker: dict[str, dict]):
         net_margin = format_percentage(row["net_margin"])
 
         print(
-            "{:<6} {:<22} {:>8.2f} {:>12} {:>12} {:>12} {:>10} {:>10}".format(
+            "{:<6} {:<22} {:>8.2f} {:>9} {:>12} {:>12} {:>12} {:>10} {:>10}".format(
                 row["ticker"],
                 company[:22],
                 row["score"],
+                f"{row['coverage']}/4",
                 market_cap,
                 free_cash_flow,
                 free_cash_flow_margin,
