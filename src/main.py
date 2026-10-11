@@ -98,6 +98,14 @@ def format_cash_runway(
     return f"{runway_years:.1f} yrs{period_label}"
 
 
+def format_statement_period(period) -> str:
+    if period is None:
+        return "N/A"
+    if hasattr(period, "strftime"):
+        return period.strftime("%Y-%m-%d")
+    return str(period)
+
+
 def print_comparison_section(title: str, rows: list[dict]) -> None:
     if not rows:
         return
@@ -157,6 +165,21 @@ def print_comparison_section(title: str, rows: list[dict]) -> None:
             )
         )
 
+    print("\nStatement periods (balance sheet as-of; operating cash flow periods averaged):")
+    print("{:<6} {:<20} {}".format("Ticker", "Balance sheet", "OpCF periods"))
+    for row in rows:
+        operating_cash_flow_periods = row["operating_cash_flow_periods"]
+        periods_label = (
+            ", ".join(format_statement_period(period) for period in operating_cash_flow_periods)
+            if operating_cash_flow_periods
+            else "N/A"
+        )
+        print("{:<6} {:<20} {}".format(
+            row["ticker"],
+            format_statement_period(row["balance_sheet_as_of"]),
+            periods_label,
+        ))
+
     print("\nScore breakdown (points; N/A means unavailable):")
     print("{:<6} {:>10} {:>12} {:>12} {:>16}".format(
         "Ticker",
@@ -204,6 +227,8 @@ def compare_biotech_tickers(comparison_metrics_by_ticker: dict[str, dict]):
             "cash_runway_years": comparison_metrics.get("cash_position", {}).get("cash_runway_years"),
             "average_operating_cash_flow": comparison_metrics.get("cash_position", {}).get("average_operating_cash_flow"),
             "cash_runway_periods": comparison_metrics.get("cash_position", {}).get("cash_runway_periods"),
+            "balance_sheet_as_of": comparison_metrics.get("statement_periods", {}).get("balance_sheet_as_of"),
+            "operating_cash_flow_periods": comparison_metrics.get("statement_periods", {}).get("operating_cash_flow_periods", []),
             "free_cash_flow_margin": comparison_metrics.get("cash_position", {}).get("free_cash_flow_margin"),
             "revenue_growth": comparison_metrics.get("growth", {}).get("revenue_growth"),
             "net_margin": comparison_metrics.get("profitability", {}).get("net_margin"),

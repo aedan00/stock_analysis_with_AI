@@ -146,6 +146,14 @@ class BiotechScoreTests(unittest.TestCase):
             "cash_runway_periods": 3,
         })
         metrics["balance_sheet"]["total_debt"] = 600_000_000
+        metrics["statement_periods"] = {
+            "balance_sheet_as_of": "2025-12-31",
+            "operating_cash_flow_periods": [
+                "2025-12-31",
+                "2024-12-31",
+                "2023-12-31",
+            ],
+        }
         output = StringIO()
 
         with redirect_stdout(output):
@@ -161,6 +169,9 @@ class BiotechScoreTests(unittest.TestCase):
         self.assertIn("$900.0M", report)
         self.assertIn("$-500.0M", report)
         self.assertIn("2.0 yrs (3yr avg)", report)
+        self.assertIn("Statement periods", report)
+        self.assertIn("2025-12-31", report)
+        self.assertIn("2024-12-31, 2023-12-31", report)
 
     def test_empty_comparison_prints_clear_message(self):
         output = StringIO()
@@ -196,7 +207,7 @@ class BiotechScoreTests(unittest.TestCase):
 class CashRunwayTests(unittest.TestCase):
     def build_metrics(self, cash, operating_cash_flow, debt=0):
         balance_sheet = pd.DataFrame(
-            {"Latest": [cash, debt]},
+            {"2025-12-31": [cash, debt]},
             index=["Cash And Cash Equivalents At Carrying Value", "Total Debt"],
         )
         operating_cash_flows = (
@@ -207,7 +218,7 @@ class CashRunwayTests(unittest.TestCase):
         cash_flow = pd.DataFrame(
             [operating_cash_flows, [-100] * len(operating_cash_flows)],
             index=["Operating Cash Flow", "Capital Expenditure"],
-            columns=[f"Period {index}" for index in range(len(operating_cash_flows))],
+            columns=[f"{2025 - index}-12-31" for index in range(len(operating_cash_flows))],
         )
         return build_biotech_comparison_metrics(
             "TEST",
@@ -235,6 +246,14 @@ class CashRunwayTests(unittest.TestCase):
         self.assertEqual(metrics["cash_position"]["average_operating_cash_flow"], -600)
         self.assertEqual(metrics["cash_position"]["cash_runway_periods"], 3)
         self.assertEqual(metrics["cash_position"]["cash_runway_years"], 2.0)
+        self.assertEqual(
+            metrics["statement_periods"]["operating_cash_flow_periods"],
+            ["2025-12-31", "2024-12-31", "2023-12-31"],
+        )
+        self.assertEqual(
+            metrics["statement_periods"]["balance_sheet_as_of"],
+            "2025-12-31",
+        )
 
     def test_missing_periods_are_ignored_in_average(self):
         metrics = self.build_metrics(

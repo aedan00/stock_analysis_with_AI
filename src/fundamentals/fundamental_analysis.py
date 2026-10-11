@@ -63,17 +63,17 @@ def _recent_finite_values(
     statement: pd.DataFrame,
     field: str,
     limit: int = 3,
-) -> list[float]:
-    """Return up to the most recent finite statement values, newest first."""
+) -> list[tuple[object, float]]:
+    """Return recent finite statement periods and values, newest first."""
     values = _get_value(statement, field)
     if values is None or len(values) == 0:
         return []
 
     recent_values = []
-    for value in values.iloc[:limit]:
+    for period, value in values.iloc[:limit].items():
         try:
             if math.isfinite(value):
-                recent_values.append(value)
+                recent_values.append((period, value))
         except (TypeError, ValueError):
             continue
 
@@ -123,10 +123,19 @@ def build_biotech_comparison_metrics(
         "Operating Cash Flow",
     )
     average_operating_cash_flow = (
-        sum(recent_operating_cash_flows) / len(recent_operating_cash_flows)
+        sum(value for _, value in recent_operating_cash_flows)
+        / len(recent_operating_cash_flows)
         if recent_operating_cash_flows
         else None
     )
+    balance_sheet_as_of = (
+        balance.columns[0]
+        if balance is not None and len(balance.columns) > 0
+        else None
+    )
+    operating_cash_flow_periods = [
+        period for period, _ in recent_operating_cash_flows
+    ]
     capital_expenditure = _latest_value(cash_flow, "Capital Expenditure")
     free_cash_flow = None
     if operating_cash_flow is not None and capital_expenditure is not None:
@@ -155,6 +164,10 @@ def build_biotech_comparison_metrics(
             "free_cash_flow": free_cash_flow,
             "cash_runway_years": cash_runway_years,
             "free_cash_flow_margin": _safe_divide(free_cash_flow, revenue),
+        },
+        "statement_periods": {
+            "balance_sheet_as_of": balance_sheet_as_of,
+            "operating_cash_flow_periods": operating_cash_flow_periods,
         },
         "balance_sheet": {
             "total_debt": total_debt,
