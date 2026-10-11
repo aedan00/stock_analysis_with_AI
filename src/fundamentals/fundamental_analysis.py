@@ -1,3 +1,5 @@
+import math
+
 import pandas as pd
 
 
@@ -57,6 +59,27 @@ def _latest_value(
     return values.iloc[0]
 
 
+def _recent_finite_values(
+    statement: pd.DataFrame,
+    field: str,
+    limit: int = 3,
+) -> list[float]:
+    """Return up to the most recent finite statement values, newest first."""
+    values = _get_value(statement, field)
+    if values is None or len(values) == 0:
+        return []
+
+    recent_values = []
+    for value in values.iloc[:limit]:
+        try:
+            if math.isfinite(value):
+                recent_values.append(value)
+        except (TypeError, ValueError):
+            continue
+
+    return recent_values
+
+
 def build_biotech_comparison_metrics(
     ticker: str,
     fundamental_data: dict,
@@ -70,13 +93,20 @@ def build_biotech_comparison_metrics(
     balance = fundamental_data.get("balance_sheet")
     cash_flow = fundamental_data.get("cash_flow")
 
-    total_cash = (
-        _latest_value(balance, "Cash And Cash Equivalents At Carrying Value")
-        or _latest_value(balance, "Cash")
-        or _latest_value(balance, "Cash And Cash Equivalents")
-    )
+    total_cash = _latest_value(balance, "Cash And Cash Equivalents At Carrying Value")
+    if total_cash is None:
+        total_cash = _latest_value(balance, "Cash")
+    if total_cash is None:
+        total_cash = _latest_value(balance, "Cash And Cash Equivalents")
 
     total_debt = _latest_value(balance, "Total Debt")
+    net_cash = None
+    if total_cash is not None and total_debt is not None:
+        try:
+            if math.isfinite(total_cash) and math.isfinite(total_debt):
+                net_cash = total_cash - total_debt
+        except (TypeError, ValueError):
+            pass
     current_assets = _latest_value(balance, "Current Assets")
     current_liabilities = _latest_value(balance, "Current Liabilities")
     total_assets = _latest_value(balance, "Total Assets")
@@ -88,10 +118,26 @@ def build_biotech_comparison_metrics(
     net_income = _latest_value(income, "Net Income")
 
     operating_cash_flow = _latest_value(cash_flow, "Operating Cash Flow")
+    recent_operating_cash_flows = _recent_finite_values(
+        cash_flow,
+        "Operating Cash Flow",
+    )
+    average_operating_cash_flow = (
+        sum(recent_operating_cash_flows) / len(recent_operating_cash_flows)
+        if recent_operating_cash_flows
+        else None
+    )
     capital_expenditure = _latest_value(cash_flow, "Capital Expenditure")
     free_cash_flow = None
     if operating_cash_flow is not None and capital_expenditure is not None:
         free_cash_flow = operating_cash_flow + capital_expenditure
+
+    cash_runway_years = None
+    if average_operating_cash_flow is not None and average_operating_cash_flow < 0:
+        cash_runway_years = _safe_divide(
+            total_cash,
+            abs(average_operating_cash_flow),
+        )
 
     return {
         "ticker": ticker,
@@ -102,7 +148,12 @@ def build_biotech_comparison_metrics(
         "enterprise_value": info.get("enterpriseValue"),
         "cash_position": {
             "total_cash": total_cash,
+            "net_cash": net_cash,
+            "operating_cash_flow": operating_cash_flow,
+            "average_operating_cash_flow": average_operating_cash_flow,
+            "cash_runway_periods": len(recent_operating_cash_flows),
             "free_cash_flow": free_cash_flow,
+            "cash_runway_years": cash_runway_years,
             "free_cash_flow_margin": _safe_divide(free_cash_flow, revenue),
         },
         "balance_sheet": {
