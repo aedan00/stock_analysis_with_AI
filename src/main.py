@@ -7,6 +7,11 @@ from technical.charts import plot_stock
 from report import create_report
 from display_report import display_report
 from technical.analysis import analyze_stock
+from clinical_trials import (
+    SPONSOR_ALIASES,
+    display_clinical_trial_summary,
+    fetch_clinical_trial_summary,
+)
 
 
 DEFAULT_BIOTECH_TICKERS = [
@@ -336,6 +341,16 @@ def main():
                 comparison_metrics_by_ticker[ticker] = comparison_metrics
 
     compare_biotech_tickers(comparison_metrics_by_ticker)
+
+    trial_tickers = [ticker for ticker in tickers if ticker in SPONSOR_ALIASES]
+    if trial_tickers:
+        include_trial_lookup = input(
+            "Fetch ClinicalTrials.gov activity for mapped companies "
+            f"({', '.join(trial_tickers)})? [y/N]: "
+        ).strip().lower() in {"y", "yes"}
+        if include_trial_lookup:
+            for ticker in trial_tickers:
+                display_clinical_trial_summary(fetch_clinical_trial_summary(ticker))
 
 
 if __name__ == "__main__":
